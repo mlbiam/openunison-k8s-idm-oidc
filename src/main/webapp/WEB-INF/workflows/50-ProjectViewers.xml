@@ -1,4 +1,4 @@
-<workflow name="ProjectViewers" label="$name$ Viewer" description="$openshift_io/description$" inList="true" orgid="97137c31-a417-4498-907d-e61f8686eb97">
+<workflow name="ProjectViewers" label="$name$ Viewer" description="$openshift_io/description$" inList="true" orgid="97137c31-a417-4498-907d-e61f8686eb97" useWhen="LEGACY=true">
     <dynamicConfiguration dynamic="true" className="com.tremolosecurity.unison.openshiftv3.wf.OpenShiftWorkflows">
         <param name="target" value="k8s"/>
         <param name="kind" value="/api/v1/namespaces"/>

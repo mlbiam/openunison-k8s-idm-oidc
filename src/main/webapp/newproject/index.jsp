@@ -171,15 +171,28 @@ limitations under the License.
 			</div>
 
 			<!-- For users that can be edited -->
-			<div ng-show="scale.showForm" >
+			<div id="outer" ng-show="scale.showForm" >
 				<form name="saveUserForm">
 					<div class="row" ng-repeat="attributeConfig in scale.attributeConfigs">
-							<div class="col-md-4">{{ attributeConfig.displayName}}</div>
-							<div class="col-md-8">
+							<div class="col-md-4" ng-show="attributeConfig.show" >{{ attributeConfig.displayName}}</div>
+							<div class="col-md-8" ng-show="attributeConfig.show">
 
-								<input type="text" ng-show="attributeConfig.type == 'text'" ng-model="scale.newUser.attributes[attributeConfig.name]"  aria-label="{{ attributeConfig.displayName }}" />
-								<select ng-show="attributeConfig.type == 'list'" ng-model="scale.newUser.attributes[attributeConfig.name]"  aria-label="{{ attributeConfig.displayName }}" ng-options="option.name for option in attributeConfig.values track by option.value" convert-to-string></select>
-
+								<input type="text" ng-show="attributeConfig.type == 'text'" ng-model="scale.newUser.attributes[attributeConfig.name]"  aria-label="{{ attributeConfig.displayName }}" ng-change="scale.edit_event(attributeConfig)" />
+								<input type="text" ng-show="attributeConfig.type == 'text-list'" ng-model="scale.newUser.attributes[attributeConfig.name]"  aria-label="{{ attributeConfig.displayName }}" ng-change="scale.change_text_control(attributeConfig)"/>
+								
+								<div class="row" ng-show="attributeConfig.type == 'text-list'" ng-repeat="vals in attributeConfig.values">
+									
+									<div class="col-md-8">
+										<a href="#" ng-click="scale.newUser.attributes[attributeConfig.name] = vals.value;scale.change_text_control(attributeConfig);">{{vals.name}}</a>
+									</div>
+								</div>
+								
+								
+								
+								
+								
+								<select ng-show="attributeConfig.type == 'list'" ng-model="scale.newUser.attributes[attributeConfig.name]"  aria-label="{{ attributeConfig.displayName }}" ng-options="option.name for option in attributeConfig.values track by option.value" convert-to-string ng-change="scale.edit_event(attributeConfig)"></select>
+								<textarea rows="10" cols="50" ng-show="attributeConfig.type == 'textarea'" ng-model="scale.newUser.attributes[attributeConfig.name]"  aria-label="{{ attributeConfig.displayName }}" ng-change="scale.edit_event(attributeConfig)"><</textarea>
 							</div>
 					</div>
 					<div class="row" ng-hide="! scale.config.requireReason">
@@ -218,7 +231,7 @@ limitations under the License.
 					<div  class="row">
 					<div class="col-md-3">
 					</div>
-						<div class="col-md-6">
+						<div class="col-md-6" ng-show="scale.showForm">
 							<input type="button" ng-disabled="scale.saveUserDisabled" class="btn btn-lg btn-primary btn-block" value="Submit Registration" ng-click="scale.saveUser()" />
 						</div>
 					</div>
@@ -254,6 +267,7 @@ limitations under the License.
 	<script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
 
 <script src="js/scale.js"></script>
+<script src="js/update_new_project.js"></script>
 
 </body>
 </html>

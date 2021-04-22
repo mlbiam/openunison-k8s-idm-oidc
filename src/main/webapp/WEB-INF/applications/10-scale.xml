@@ -123,7 +123,7 @@
           <param name="approvalAttributeNames" value="mail"/>
           <param name="approvals.uid" value="Login ID"/>
           <param name="approvals.mail" value="Email Address"/>
-          <param name="showPortalOrgs" value="#[SHOW_PORTAL_ORGS:false]"/>
+          <param name="showPortalOrgs" value="true"/>
           <param name="logoutURL" value="/logout"/>
           <param name="canDelegate" value="yes" />
           <param name="canPreApprove" value="yes" />
@@ -162,6 +162,24 @@
                         <param name="useCallWorkflowClass" value="true"/>
                         <param name="callWorkflowClassName" value="com.tremolosecurity.scalejs.K8sProjectCheck"/>
                         <param name="submitLoggedInUser" value="true"/>
+                        
+                        <param name="attributeNames" value="cluster"/>
+                        <param name="cluster.displayName" value="Cluster" />
+                        <param name="cluster.readOnly" value="false" />
+                        <param name="cluster.required" value="true"/>
+                        <param name="cluster.regEx" value=".*" />
+                        <param name="cluster.regExFailedMsg" value="invalid" />
+                        <param name="cluster.minChars" value="0" />
+                        <param name="cluster.maxChars" value="0" />
+                        <param name="cluster.unique" value="false" />
+                        <param name="cluster.type" value="list" />
+                        <param name="cluster.editJavaScriptFunction" value="update_new_project(this,attr_cfg)" />
+                        <param name="cluster.dynamicValueSource.className" value="com.tremolosecurity.scalejs.ListClusters" />
+                        
+
+
+
+                        
                         <param name="attributeNames" value="nameSpace"/>
                         <param name="nameSpace.displayName" value="Namespace Name"/>
                         <param name="nameSpace.readOnly" value="false"/>
@@ -173,7 +191,35 @@
                         <param name="nameSpace.unique" value="false"/>
                         <param name="nameSpace.type" value="text"/>
 
-                        <param name="callWorkflowInit" value="workflowName=NewK8SNamespace" />
+                        <param name="attributeNames" value="gitUrl"/>
+                        <param name="gitUrl.displayName" value="Git URL"/>
+                        <param name="gitUrl.readOnly" value="false"/>
+                        <param name="gitUrl.required" value="false"/>
+                        <param name="gitUrl.regEx" value="^.*$"/>
+                        <param name="gitUrl.regExFailedMsg" value="Invalid git url"/>
+                        <param name="gitUrl.minChars" value="0"/>
+                        <param name="gitUrl.maxChars" value="0"/>
+                        <param name="gitUrl.unique" value="false"/>
+                        <param name="gitUrl.type" value="text"/>
+                        <param name="gitUrl.show" value="false"/>
+
+                        <param name="attributeNames" value="gitSshKey"/>
+                        <param name="gitSshKey.displayName" value="Git SSH Private Key"/>
+                        <param name="gitSshKey.readOnly" value="false"/>
+                        <param name="gitSshKey.required" value="false"/>
+                        <param name="gitSshKey.regEx" value=""/>
+                        <param name="gitSshKey.regExFailedMsg" value="Invalid ssh key"/>
+                        <param name="gitSshKey.minChars" value="0"/>
+                        <param name="gitSshKey.maxChars" value="10000"/>
+                        <param name="gitSshKey.unique" value="false"/>
+                        <param name="gitSshKey.type" value="textarea"/>
+                        <param name="gitSshKey.show" value="false"/>
+
+
+                        <!-- <param name="callWorkflowInit" value="workflowName=NewK8SNamespace" /> -->
+
+                        <param name="callWorkflowInit" value="workflowName=new-k8s-namespace" />
+
                         <param name="callWorkflowInit" value="targetName=k8s" />
                         <param name="callWorkflowInit" value="projectAttributeName=nameSpace" />
                     </filter>
@@ -189,26 +235,24 @@
                     <rule scope="dn" constraint="o=Tremolo"/>
                 </azRules>
             </url>
-            <!-- <url regex="false" authChain="LoginService" overrideHost="false" overrideReferer="false">
-                <host>#[OU_HOST]</host>
-                <filterChain>
-                  <filter class="com.tremolosecurity.proxy.filters.RemovePrefix">
-                    <param name="prefix" value="/newproject"/>
-                    <param name="attributeName" value="trimmedURI"/>
-                  </filter>
-                </filterChain>
-                <uri>/newproject</uri>
-                <proxyTo>https://cdn.rawgit.com/TremoloSecurity/OpenUnison/1.0.12/unison/unison-scalejs-register/src/main/html${trimmedURI}</proxyTo>
-                <results>
-                    <auSuccess></auSuccess>
-                    <auFail>Default Login Failure</auFail>
-                    <azSuccess></azSuccess>
-                    <azFail>PrivilegedRequest</azFail>
-                </results>
-                <azRules>
-                    <rule scope="dn" constraint="o=Tremolo"/>
-                </azRules>
-            </url> -->
+
+            <url regex="false" authChain="LoginService" overrideHost="false" overrideReferer="false">
+              <host>#[OU_HOST]</host>
+              <filterChain>
+                  <filter class="com.tremolosecurity.proxy.filters.CheckK8sTargetMetadata" />
+                     
+              </filterChain>
+              <uri>/newproject/target-metadata</uri>
+              <results>
+                  <auSuccess></auSuccess>
+                  <auFail>Default Login Failure</auFail>
+                  <azSuccess></azSuccess>
+                  <azFail>PrivilegedRequest</azFail>
+              </results>
+              <azRules>
+                  <rule scope="dn" constraint="o=Tremolo"/>
+              </azRules>
+          </url>
 
             <url regex="false" authChain="LoginService" overrideHost="false" overrideReferer="false">
                 <host>#[OU_HOST]</host>
@@ -262,8 +306,8 @@
                   <param name="k8sCaCertName" value="unison-ca" useWhen="K8S_IMPERSONATION=true" />
                   <param name="k8sCaCertName" value="#[K8S_API_SERVER_CERT:k8s-master]" useWhen="K8S_IMPERSONATION=false" useDefault="true"/>
                   <param name="unisonCaCertName" value="unison-ca"/>
-                  <param name="kubectlTemplate" value="export TMP_CERT=\$(mktemp) &amp;&amp; echo -e &quot;$k8s_newline_cert$&quot; > \$TMP_CERT &amp;&amp; kubectl config set-cluster #[K8S_CLUSTER_NAME:kubernetes] --server=#[K8S_URL] --certificate-authority=\$TMP_CERT --embed-certs=true &amp;&amp; kubectl config set-context #[K8S_CLUSTER_NAME:kubernetes] --cluster=#[K8S_CLUSTER_NAME:kubernetes] --user=$user_id$  &amp;&amp; kubectl config set-credentials $user_id$  --auth-provider=oidc --auth-provider-arg=idp-issuer-url=$token.claims.issuer$ --auth-provider-arg=client-id=$token.trustName$ --auth-provider-arg=refresh-token=$token.refreshToken$  --auth-provider-arg=id-token=$token.encodedIdJSON$  --auth-provider-arg=idp-certificate-authority-data=#[IDP_CERT_DATA:$ou_b64_cert$]   &amp;&amp; kubectl config use-context #[K8S_CLUSTER_NAME:kubernetes] &amp;&amp; rm \$TMP_CERT" />
-                  <param name="kubectlWinUsage" value="\$TMP_CERT=New-TemporaryFile ; &quot;$k8s_newline_cert_win$&quot; | out-file \$TMP_CERT -encoding oem ; kubectl config set-cluster #[K8S_CLUSTER_NAME:kubernetes] --server=#[K8S_URL]  --certificate-authority=\$TMP_CERT --embed-certs=true ; kubectl config set-context #[K8S_CLUSTER_NAME:kubernetes] --cluster=#[K8S_CLUSTER_NAME:kubernetes] --user=$user_id$  ; kubectl config set-credentials $user_id$  --auth-provider=oidc --auth-provider-arg=idp-issuer-url=$token.claims.issuer$ --auth-provider-arg=client-id=$token.trustName$ --auth-provider-arg=refresh-token=$token.refreshToken$  --auth-provider-arg=id-token=$token.encodedIdJSON$  --auth-provider-arg=idp-certificate-authority-data=$ou_b64_cert$ ; kubectl config use-context #[K8S_CLUSTER_NAME:kubernetes] ; Remove-Item -recurse -force \$TMP_CERT" />
+                  <param name="kubectlTemplate"><![CDATA[ export TMP_CERT=\$(mktemp) && echo -e "$k8s_newline_cert$" > \$TMP_CERT && kubectl config set-cluster #[K8S_CLUSTER_NAME:kubernetes] --server=#[K8S_URL] --certificate-authority=\$TMP_CERT --embed-certs=true && kubectl config set-context #[K8S_CLUSTER_NAME:kubernetes] --cluster=#[K8S_CLUSTER_NAME:kubernetes] --user=$user_id$@#[K8S_CLUSTER_NAME:kubernetes]  && kubectl config set-credentials $user_id$@#[K8S_CLUSTER_NAME:kubernetes]  --auth-provider=oidc --auth-provider-arg=idp-issuer-url=$token.claims.issuer$ --auth-provider-arg=client-id=$token.trustName$ --auth-provider-arg=refresh-token=$token.refreshToken$  --auth-provider-arg=id-token=$token.encodedIdJSON$  --auth-provider-arg=idp-certificate-authority-data=#[IDP_CERT_DATA:$ou_b64_cert$]   && kubectl config use-context #[K8S_CLUSTER_NAME:kubernetes] && rm \$TMP_CERT ]]> </param>
+                  <param name="kubectlWinUsage" ><![CDATA[ \$TMP_CERT=New-TemporaryFile ; "$k8s_newline_cert_win$" | out-file \$TMP_CERT -encoding oem ; kubectl config set-cluster #[K8S_CLUSTER_NAME:kubernetes] --server=#[K8S_URL]  --certificate-authority=\$TMP_CERT --embed-certs=true ; kubectl config set-context #[K8S_CLUSTER_NAME:kubernetes] --cluster=#[K8S_CLUSTER_NAME:kubernetes] --user=$user_id$@#[K8S_CLUSTER_NAME:kubernetes]  ; kubectl config set-credentials $user_id$@#[K8S_CLUSTER_NAME:kubernetes]  --auth-provider=oidc --auth-provider-arg=idp-issuer-url=$token.claims.issuer$ --auth-provider-arg=client-id=$token.trustName$ --auth-provider-arg=refresh-token=$token.refreshToken$  --auth-provider-arg=id-token=$token.encodedIdJSON$  --auth-provider-arg=idp-certificate-authority-data=$ou_b64_cert$ ; kubectl config use-context #[K8S_CLUSTER_NAME:kubernetes] ; Remove-Item -recurse -force \$TMP_CERT ]]></param>
                 </filter>
                 </filterChain>
                 <uri>/k8stoken/token</uri>

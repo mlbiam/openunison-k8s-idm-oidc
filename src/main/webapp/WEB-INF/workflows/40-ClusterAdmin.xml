@@ -1,4 +1,4 @@
-<workflow name="ClusterAdmin" label="Cluster Administrator" description="Request this role to become a cluster administrator" inList="true" orgid="441a2bf1-3e47-4d40-a994-99faa15f997a">
+<workflow name="ClusterAdmin" label="Cluster Administrator" description="Request this role to become a cluster administrator" inList="true" orgid="441a2bf1-3e47-4d40-a994-99faa15f997a" useWhen="LEGACY=true">
     <dynamicConfiguration dynamic="false" className="com.tremolosecurity.provisioning.dynamicwf.LDAPDynaicWorkflows">
         <param name="descriptionAttribute" value=""/>
         <param name="approverAttribute" value=""/>

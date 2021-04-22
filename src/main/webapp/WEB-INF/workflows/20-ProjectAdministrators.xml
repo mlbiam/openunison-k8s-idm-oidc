@@ -1,4 +1,4 @@
-<workflow name="ProjectAdministrators" label="$name$ Administrator" description="$openshift_io/description$" inList="true" orgid="cecae082-c85d-48df-a837-4726bb755180">
+<workflow name="ProjectAdministrators" label="$name$ Administrator" description="$openshift_io/description$" inList="true" orgid="cecae082-c85d-48df-a837-4726bb755180" useWhen="LEGACY=true">
 <dynamicConfiguration dynamic="true" className="com.tremolosecurity.unison.openshiftv3.wf.OpenShiftWorkflows">
   <param name="target" value="k8s"/>
   <param name="kind" value="/api/v1/namespaces"/>

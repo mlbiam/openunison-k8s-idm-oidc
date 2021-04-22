@@ -12,7 +12,7 @@
       <!-- The URI (aka path) of this URL -->
       <uri>/admin</uri>
       <!-- Tells OpenUnison how to reach the downstream application.  The ${} lets you set any request variable into the URI, but most of the time ${fullURI} is sufficient -->
-      <proxyTo>https://amq.openunison.svc.cluster.local:8162${fullURI}</proxyTo>
+      <proxyTo>https://amq.openunison.svc:8162${fullURI}</proxyTo>
       <!-- List the various results that should happen -->
       <results>
         

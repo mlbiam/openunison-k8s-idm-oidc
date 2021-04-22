@@ -124,6 +124,9 @@ Copy `values.yaml` (https://raw.githubusercontent.com/OpenUnison/helm-charts/mas
 | network.api_server_host | The host name to use for the api server reverse proxy.  This is what `kubectl` will interact with to access your cluster. **NOTE:** `network.openunison_host` and `network.dashboard_host` |
 | network.k8s_url | The URL for the Kubernetes API server | 
 | network.session_inactivity_timeout_seconds | The number of seconds of inactivity before the session is terminated, also the length of the refresh token's session |
+| network.createIngressCertificate | If true (default), the operator will create a self signed Ingress certificate.  Set to false if using an existing certificate or LetsEncrypt |
+| network.ingress_type | The type of `Ingress` object to create.  Right now only `nginx` is supported |
+| network.ingress_annotations | Annotations to add to the `Ingress` object |
 | cert_template.ou | The `OU` attribute for the forward facing certificate |
 | cert_template.o | The `O` attribute for the forward facing certificate |
 | cert_template.l | The `L` attribute for the forward facing certificate |
@@ -139,6 +142,33 @@ Copy `values.yaml` (https://raw.githubusercontent.com/OpenUnison/helm-charts/mas
 | image | The name of the image to use |
 | enable_impersonation | If `true`, OpenUnison will run in impersonation mode.  Instead of OpenUnison being integrated with Kubernetes via OIDC, OpenUnison will be a reverse proxy and impersonate users.  This is useful with cloud deployments where oidc is not an option |
 | monitoring.prometheus_service_account | The prometheus service account to authorize access to the /monitoring endpoint |
+| network_policies.enabled | If `true`, creates a deny-all network policy and additional policies based on below configurations |
+| network_policies.ingress.enabled | if `true`, a policy will be created that allows access from the `Namespace` identified by the `labels` |
+| network_policies.ingress.labels | Labels for the `Namespace` hosting the `Ingress` |
+| network_policies.monitoring.enabled | if `true`, a policy will be created that allows access from the `Namespace` identified by the `labels` to support monitoring |
+| network_policies.monitoring.labels | Labels for the `Namespace` hosting monitoring |
+| network_policies.apiserver.enabled | if `true`, a policy will be created that allows access from the `kube-ns` `Namespace` identified by the `labels` |
+| network_policies.apiserver.labels | Labels for the `Namespace` hosting the api server |
+| services.enable_tokenrequest | If `true`, the OpenUnison `Deployment` will use the `TokenRequest` API instead of static `ServiceAccount` tokens.  *** NOT AVAILABLE UNTIL OPENUNISON 1.0.21 *** |
+| services.token_request_audience | The audience expected by the API server *** NOT AVAILABLE UNTIL OPENUNISON 1.0.21 *** |
+| services.token_request_expiration_seconds | The number of seconds TokenRequest tokens should be valid for, minimum 600 seconds *** NOT AVAILABLE UNTIL OPENUNISON 1.0.21 *** | 
+| services.node_selectors | annotations to use when choosing nodes to run OpenUnison, maps to the `Deployment` `nodeSelector` |
+| services.pullSecret | The name of the `Secret` that stores the pull secret for pulling the OpenUnison image |
+| services.resources.requests.memory | Memory requested by OpenUnison |
+| services.resources.requests.cpu | CPU requested by OpenUnison |
+| services.resources.limits.memory | Maximum memory allocated to OpenUnison |
+| services.resources.limits.cpu | Maximum CPU allocated to OpenUnison |
+| openunison.replicas | The number of OpenUnison replicas to run, defaults to 1 |
+| openunison.non_secret_data | Add additional non-secret configuration options, added to the `non_secret_data` secrtion of the `OpenUnison` object |
+| openunison.secrets | Add additional keys from the `orchestra-secrets-source` `Secret` |
+| impersonation.use_jetstack | if `true`, the operator will deploy an instance of JetStack's OIDC Proxy (https://github.com/jetstack/kube-oidc-proxy).  Default is `false` |
+| impersonation.jetstack_oidc_proxy_image | The name of the image to use |
+| impersonation.explicit_certificate_trust | If `true`, oidc-proxy will explicitly trust the `tls.crt` key of the `Secret` named in `impersonation.ca_secret_name`.  Defaults to `true` |
+| impersonation.ca_secret_name | If `impersonation.explicit_certificate_trust` is `true`, the name of the tls `Secret` that stores the certificate for OpenUnison that the oidc proxy needs to trust.  Defaults to `ou-tls-secret` |
+| impersonation.resources.requests.memory | Memory requested by oidc proxy |
+| impersonation.resources.requests.cpu | CPU requested by oidc proxy |
+| impersonation.resources.limits.memory | Maximum memory allocated to oidc proxy |
+| impersonation.resources.limits.cpu | Maximum CPU allocated to oidc proxy |
 | database.hibernate_dialect | Hibernate dialect for accessing the database.  Unless customizing for a different database do not change |
 | database.quartz_dialect | Dialect used by the Quartz Scheduler.  Unless customizing for a different database do not change  |
 | database.driver | JDBC driver for accessing the database.  Unless customizing for a different database do not change |
@@ -166,9 +196,15 @@ Copy `values.yaml` (https://raw.githubusercontent.com/OpenUnison/helm-charts/mas
 
 Additionally, you can add your identity provider's TLS base64 encoded PEM certificate to your values under `trusted_certs` for `pem_b64`.  This will allow OpenUnison to talk to your identity provider using TLS if it doesn't use a commercially signed certificate.  *NOTE* - If you are using a public identity provider like Googl or Okta replace the `trusted_certs` section with `trusted_certs: []`.
 
-Finally, run the helm chart:
+Next, run the helm chart:
 
 `helm install orchestra tremolo/openunison-k8s-oidc --namespace openunison -f /path/to/values.yaml`
+
+Once OpenUnison is fully deployed, run the final helm chart to create the workflows for namespace and user onboarding:
+
+`helm install cluster-management tremolo/openunison-k8s-cluster-management -n openunison`
+
+(There's a webhook that is installed so you MUST wait for openunison to be available before running)
 
 ## Complete SSO Integration with Kubernetes
 
@@ -195,7 +231,7 @@ Once SSO is enabled in the next step, you'll need a cluster administrator to be 
 1.  Login to Orchestra
 2.  Click on "Request Access" in the title bar
 3.  Click on "Kubernetes Administration"
-4.  Click "Add To Cart" next to "Cluster Administrator"
+4.  Click "Add To Cart" next to "Local Deployment Cluster Administrator"
 5.  Next to "Check Out" in the title bar you'll see a red `1`, click on "Check Out"
 6.  For "Supply Reason", give a reason like "Initial user" and click "Submit Request"
 7.  Since you are the only approver refresh OpenUnison, you will see a red `1` next to "Open Approvals".  Click on "Open Approvals"
@@ -379,6 +415,10 @@ Please take a look at https://github.com/TremoloSecurity/OpenUnison/wiki/trouble
 # Customizing Orchestra
 
 To customize Orchestra - https://github.com/TremoloSecurity/OpenUnison/wiki/troubleshooting#customizing-orchestra
+
+# Adding Additional Clusters
+
+***COMING SOON***
 
 # Whats next?
 Users can now login to create namespaces, request access to cluster admin or request access to other clusters.
